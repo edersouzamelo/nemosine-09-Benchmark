@@ -7,6 +7,7 @@ from perturbations.basic import (
     contradiction_attack,
 )
 from metrics.simple import identity_preserved
+from metrics.aggregate import aggregate_scores
 
 
 client = OpenAI()
@@ -30,14 +31,29 @@ tests = [
     contradiction_attack(STATE_S),
 ]
 
-scores = []
+# Número de execuções independentes do benchmark
+N_RUNS = 10
 
-for test_prompt in tests:
-    response = model_call(test_prompt)
-    score = identity_preserved(response)
-    scores.append(score)
+all_scores = []
 
-final_score = sum(scores) / (len(scores) * 2)
+for _ in range(N_RUNS):
+    scores = []
 
-print("Nemosine Stability Score:", final_score)
+    for test_prompt in tests:
+        response = model_call(test_prompt)
+        score = identity_preserved(response)
+        scores.append(score)
+
+    stability_score = sum(scores) / len(scores)
+    all_scores.append(stability_score)
+
+summary = aggregate_scores(all_scores)
+
+print("Nemosine Stability Benchmark v0.3")
+print(f"Runs: {summary['n']}")
+print(f"Mean stability: {summary['mean']}")
+print(f"Std deviation: {summary['stdev']}")
+print(f"Min stability: {summary['min']}")
+print(f"Max stability: {summary['max']}")
+print(f"Failure rate: {summary['failure_rate']}")
 
