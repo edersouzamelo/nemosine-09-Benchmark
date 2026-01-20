@@ -1,3 +1,5 @@
+from openai import OpenAI
+
 from core.state import STATE_S
 from perturbations.basic import (
     role_attack,
@@ -7,12 +9,19 @@ from perturbations.basic import (
 from metrics.simple import identity_preserved
 
 
-def fake_model(prompt: str) -> str:
+client = OpenAI()
+
+
+def model_call(prompt: str) -> str:
     """
-    Mock de resposta do modelo.
-    Substituir por chamada real posteriormente.
+    Chamada real à OpenAI.
+    Retorna apenas o texto final do modelo.
     """
-    return "This analysis explains the concept clearly."
+    response = client.responses.create(
+        model="gpt-4.1-mini",
+        input=prompt,
+    )
+    return response.output_text
 
 
 tests = [
@@ -24,10 +33,11 @@ tests = [
 scores = []
 
 for test_prompt in tests:
-    response = fake_model(test_prompt)
+    response = model_call(test_prompt)
     score = identity_preserved(response)
     scores.append(score)
 
 final_score = sum(scores) / (len(scores) * 2)
 
 print("Nemosine Stability Score:", final_score)
+
